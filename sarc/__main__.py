@@ -1,16 +1,16 @@
-#!/usr/bin/env python3
 # Copyright 2018 leoetlino <leo@leolam.fr>
-# Licensed under MIT
+# Licensed under GPLv2+
 
 import argparse
 import io
 import os
-import sarc
 import shutil
 import struct
 import sys
 import typing
-import yaz0_util
+
+from . import sarc
+import wszst_yaz0
 
 def sarc_extract(args) -> None:
     with open(args.sarc, "rb") as f:
@@ -38,7 +38,7 @@ def _write_sarc(writer: sarc.SARCWriter, dest_file: str, dest_stream: typing.Bin
 
     extension = os.path.splitext(dest_file)[1]
     if extension.startswith('.s') and extension != '.sarc':
-        dest_stream.write(yaz0_util.compress(buf.getbuffer()))
+        dest_stream.write(wszst_yaz0.compress(buf.getbuffer()))
         if alignment > 0x20:
             # Offset 0x8 in the yaz0 header is the data alignment.
             # sead::ParallelSZSDecompressor::tryDecompFromDevice allocates the read buffer
@@ -169,7 +169,7 @@ def sarc_test_repack(args) -> None:
 
     print('ok')
 
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser(description='Tool to extract or list files in a SARC archive.')
 
     subparsers = parser.add_subparsers(dest='command', help='Command')

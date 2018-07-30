@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 # Copyright 2018 leoetlino <leo@leolam.fr>
-# Licensed under MIT
+# Licensed under GPLv2+
 
 import io
 import json
@@ -13,7 +12,7 @@ import typing
 import yaml
 
 import rstb
-import yaz0_util
+import wszst_yaz0
 
 def _get_unpack_endian_character(big_endian: bool):
     return '>' if big_endian else '<'
@@ -214,7 +213,7 @@ class SARCWriter:
         if len(data) <= 0x4:
             return 0
         if data[0:4] == b'Yaz0' and data[0x11:0x15] == b'SARC':
-            data = memoryview(yaz0_util.decompress(data))
+            data = memoryview(wszst_yaz0.decompress(data))
         if data[0:4] != b'SARC':
             return 0
         # In some archives (SMO for example), Nintendo seems to use a somewhat arbitrary
@@ -354,7 +353,7 @@ def read_file_and_make_sarc(f: typing.BinaryIO) -> typing.Optional[SARC]:
         f.seek(0)
         if first_data_group_fourcc != b"SARC":
             return None
-        data = yaz0_util.decompress(f.read())
+        data = wszst_yaz0.decompress(f.read())
     elif magic == b"SARC":
         f.seek(0)
         data = f.read()
