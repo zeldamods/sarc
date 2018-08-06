@@ -61,6 +61,11 @@ class SARC:
         gcd = next(iter(self._files.values()))[0] + self._doff
         for node in self._files.values():
             gcd = math.gcd(gcd, node[0] + self._doff)
+
+        if gcd == 0 or gcd & (gcd - 1) != 0:
+            # If the GCD is not a power of 2, the files are mostly likely NOT aligned.
+            return 4
+
         return gcd
 
     def get_data_offset(self) -> int:
