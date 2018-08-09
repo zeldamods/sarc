@@ -65,10 +65,13 @@ def sarc_create_or_update(args, update: bool) -> None:
         if len(file_list) != 1:
             sys.stderr.write('error: cannot auto detect base path from file list\n')
             sys.exit(1)
-        if not os.path.isdir(file_list[0]):
+        if not os.path.isdir(file_list[0]) and os.path.isdir(dest_file):
             sys.stderr.write(f'error: {file_list[0]} is not a directory. Did you mix up the argument order? (directory that should be archived first, then the target SARC)\n')
             sys.exit(1)
-        base_path = file_list[0]
+        if os.path.isdir(file_list[0]):
+            base_path = file_list[0]
+        else:
+            base_path = os.getcwd()
 
     writer: typing.Optional[sarc.SARCWriter] = None
     if not update:
