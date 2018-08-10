@@ -366,7 +366,7 @@ def read_file_and_make_sarc(f: typing.BinaryIO) -> typing.Optional[SARC]:
         return None
     return SARC(data)
 
-def make_writer_from_sarc(sarc: SARC, filter_fn: typing.Optional[typing.Callable[[str], bool]]) -> typing.Optional[SARCWriter]:
+def make_writer_from_sarc(sarc: SARC, filter_fn: typing.Optional[typing.Callable[[str], bool]] = None) -> typing.Optional[SARCWriter]:
     writer = SARCWriter(be=sarc._be)
     writer.set_default_alignment(sarc.guess_default_alignment())
     for file in sarc.list_files():
@@ -375,7 +375,7 @@ def make_writer_from_sarc(sarc: SARC, filter_fn: typing.Optional[typing.Callable
 
     return writer
 
-def read_sarc_and_make_writer(f: typing.BinaryIO, filter_fn: typing.Optional[typing.Callable[[str], bool]]) -> typing.Optional[SARCWriter]:
+def read_sarc_and_make_writer(f: typing.BinaryIO, filter_fn: typing.Optional[typing.Callable[[str], bool]] = None) -> typing.Optional[SARCWriter]:
     sarc = read_file_and_make_sarc(f)
     if not sarc:
         return None
