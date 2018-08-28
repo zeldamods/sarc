@@ -1,3 +1,4 @@
+import fastentrypoints
 import setuptools
 
 with open("README.md", "r") as fh:
@@ -5,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sarc",
-    version="1.0.4",
+    version="1.0.5",
     author="leoetlino",
     author_email="leo@leolam.fr",
     description="Nintendo SARC archive reader and writer",
