@@ -1,5 +1,9 @@
 ## Nintendo SARC archive reader and writer
 
+### Setup
+
+Install Python 3.6+ (**64 bit version**) then run `pip install sarc`.
+
 ### List files in an archive
 
     sarc list ARCHIVE
@@ -42,6 +46,43 @@ with `--endian {le,be}` (le for little and be for big endian).
 
 Nothing much to say here. Just keep in mind FILES_TO_DELETE takes archive paths
 (those that are printed by `list`).
+
+### Library usage
+
+```python
+import sarc
+
+archive = sarc.read_file_and_make_sarc(file)
+# or if you already have a buffer
+archive = sarc.SARC(archive_bytes)
+if archive:
+    for file_name in archive.list_files():
+        size = archive.get_file_size(file_name)
+        data = archive.get_file_data(file_name)
+
+```
+
+To modify an archive:
+
+```python
+import sarc
+
+writer = sarc.make_writer_from_sarc(archive)
+# or if you're reading from a file
+writer = sarc.read_sarc_and_make_writer(file)
+# or for a blank archive
+writer = sarc.SARCWriter(be=big_endian)
+
+writer.add_file('test.bfevfl', b'file contents')
+writer.add_file('another_file.txt', b'file contents')
+writer.add_file('test.bfevfl', b'replacing a file')
+
+writer.delete_file('another_file.txt')
+
+writer.write(output_stream)
+```
+
+For more information, please look at [sarc.py](sarc/sarc.py).
 
 ### License
 
