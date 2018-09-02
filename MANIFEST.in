@@ -1,2 +1,2 @@
-include sarc/aglenv_file_info.yml
+include sarc/aglenv_file_info.json
 include fastentrypoints.py
