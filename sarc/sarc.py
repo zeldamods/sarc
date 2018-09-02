@@ -9,7 +9,6 @@ import os
 import struct
 import sys
 import typing
-import yaml
 
 import rstb
 import wszst_yaz0
@@ -148,8 +147,8 @@ def _align_up(n: int, alignment: int) -> int:
     return (n + alignment - 1) & -alignment
 
 def _load_aglenv_file_info() -> typing.List[dict]:
-    with open(os.path.dirname(os.path.realpath(__file__)) + '/aglenv_file_info.yml', 'r', encoding='utf-8') as f:
-        return yaml.load(f, Loader=yaml.CSafeLoader) # type: ignore
+    with open(os.path.dirname(os.path.realpath(__file__)) + '/aglenv_file_info.json', 'r', encoding='utf-8') as f:
+        return json.load(f) # type: ignore
 
 def _load_botw_resource_factory_info() -> typing.Dict[str, rstb.SizeCalculator.Factory]:
     return rstb.SizeCalculator().get_factory_info()

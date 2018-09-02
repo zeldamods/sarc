@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sarc",
-    version="1.0.5-1",
+    version="1.0.6",
     author="leoetlino",
     author_email="leo@leolam.fr",
     description="Nintendo SARC archive reader and writer",
@@ -22,7 +22,7 @@ setuptools.setup(
         "Topic :: Software Development :: Libraries",
     ],
     python_requires='>=3.6',
-    install_requires=['rstb~=1.0', 'PyYAML~=3.12', 'wszst_yaz0~=1.0'],
+    install_requires=['rstb~=1.0', 'wszst_yaz0~=1.0'],
     entry_points = {
         'console_scripts': [
             'sarc = sarc.__main__:main',
