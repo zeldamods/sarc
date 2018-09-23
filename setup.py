@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sarc",
-    version="1.0.6-1",
+    version="1.1.0",
     author="leoetlino",
     author_email="leo@leolam.fr",
     description="Nintendo SARC archive reader and writer",
