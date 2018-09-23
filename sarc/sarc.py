@@ -167,10 +167,13 @@ class SARCWriter:
         self._files: typing.Dict[int, SARCWriter.File] = dict()
         self._alignment: typing.Dict[str, int] = dict()
         self._default_alignment = 4
-        self._align_nested_sarc = False
+        self._has_proper_resource_system = True
 
     def set_align_for_nested_sarc(self, enable: bool) -> None:
-        self._align_nested_sarc = enable
+        self._has_proper_resource_system = not enable
+
+    def set_has_proper_resource_system(self, has_proper_res_system: bool) -> None:
+        self._has_proper_resource_system = has_proper_res_system
 
     def set_default_alignment(self, value: int) -> None:
         if value == 0 or value & (value - 1) != 0:
@@ -211,7 +214,7 @@ class SARCWriter:
         self._alignment[extension_without_dot] = abs(alignment)
 
     def _get_file_alignment_for_sarc(self, file: File) -> int:
-        if not self._align_nested_sarc:
+        if self._has_proper_resource_system:
             return 0
         data = memoryview(file.data)
         if len(data) <= 0x4:
@@ -250,7 +253,7 @@ class SARCWriter:
         ext = os.path.splitext(file.name)[1][1:]
         alignment = self._alignment.get(ext, self._default_alignment)
         alignment = max(alignment, self._get_file_alignment_for_sarc(file))
-        if ext not in self._botw_resource_factory_info:
+        if not self._has_proper_resource_system or ext not in self._botw_resource_factory_info:
             alignment = max(alignment, self._get_file_alignment_for_new_binary_file(file))
             alignment = max(alignment, self._get_file_alignment_for_old_bflim(file))
         return alignment

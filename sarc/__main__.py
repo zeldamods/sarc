@@ -215,7 +215,7 @@ def main() -> None:
     t_parser.set_defaults(func=sarc_test_repack)
 
     for p in [c_parser, u_parser, d_parser, t_parser]:
-        p.add_argument('-A', '--align-nested-sarc', action='store_true', help='Align nested SARCs to 0x2000 byte boundaries. Useless for BotW but required for some games. Defaults to false.')
+        p.add_argument('-A', '--align-nested-sarc', '--not-botw', action='store_true', help='Align nested SARCs to 0x2000 byte boundaries and do *not* assume the game resource system will handle alignment. Useless and even harmful for BotW, but required for some games. Defaults to false.')
 
     args = parser.parse_args()
     args.func(args)
