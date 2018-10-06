@@ -1,2 +1,4 @@
 include sarc/aglenv_file_info.json
 include fastentrypoints.py
+include versioneer.py
+include sarc/_version.py
