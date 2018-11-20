@@ -1,6 +1,7 @@
 # Copyright 2018 leoetlino <leo@leolam.fr>
 # Licensed under GPLv2+
 
+import ctypes
 import io
 import json
 import math
@@ -299,9 +300,29 @@ class SARCWriter:
         return alignment
 
     def _hash_file_name(self, name: str) -> int:
+        #
+        # The algorithm looks like this in C++:
+        #
+        #       uint32_t hash = 0;
+        #       int i = 0;
+        #       while (true) {
+        #         char c = string[i++];
+        #         if (!c)
+        #           break;
+        #         hash = hash * multiplier + c;
+        #       }
+        #
+        # There are three things we need to be careful about when reimplementing it in Python:
+        # * the hash is kept in an unsigned 32-bit integer variable,
+        #   thus standard integer arithmetic (wrapping, signedness, etc.) applies;
+        # * the character is stored in a char variable. Char signedness is implementation-defined
+        #   but Nintendo's tools use signed chars;
+        # * the string is iterated byte per byte, not Unicode-character-wise.
+        #
         h = 0
-        for c in name:
-            h = (ord(c) + h * self._hash_multiplier) & 0xffffffff
+        for b in name.encode():
+            c = ctypes.c_int8(b).value
+            h = (c + (h * self._hash_multiplier) & 0xffffffff) & 0xffffffff
         return h
 
     def add_file(self, name: str, data: typing.Union[memoryview, bytes]) -> None:
