@@ -17,49 +17,89 @@ def _get_unpack_endian_character(big_endian: bool):
     return '>' if big_endian else '<'
 
 _NUL_CHAR = b'\x00'
+_SFAT_NODE_SIZE = 0x10
 
 class SARC:
-    """A simple SARC reader.
-
-    Original implementation by NWPlayer123. This version has been heavily edited
-    to be usable as a library, handle little endian and fix broken yaz0 support.
-    """
+    """A simple SARC reader."""
     def __init__(self, data: typing.Union[memoryview, bytes]) -> None:
         self._data = memoryview(data)
-        if data[0:4] != b"SARC":
-            raise ValueError("Not a SARC")
-        self._be = data[6:8] == b"\xFE\xFF"
-        if not self._be and data[6:8] != b"\xFF\xFE":
+
+        # This mirrors what the official library does when reading an archive
+        # (sead::SharcArchiveRes::prepareArchive_)
+
+        # Parse the SARC header.
+        if self._data[0:4] != b"SARC":
+            raise ValueError("Unknown SARC magic")
+        bom = self._data[6:8]
+        self._be = bom == b"\xFE\xFF"
+        if not self._be and bom != b"\xFF\xFE":
             raise ValueError("Invalid BOM")
+        version = self._read_u16(0x10)
+        if version != 0x100:
+            raise ValueError("Unknown SARC version")
+        sarc_header_size = self._read_u16(0x4)
+        if sarc_header_size != 0x14:
+            raise ValueError("Unexpected SARC header size")
 
-        pos = 12
-        self._doff: int = self._read_u32(pos);pos += 8 #Start of data section
+        # Parse the SFAT header.
+        sfat_header_offset = sarc_header_size
+        if self._data[sfat_header_offset:sfat_header_offset+4] != b"SFAT":
+            raise ValueError("Unknown SFAT magic")
+        sfat_header_size = self._read_u16(sfat_header_offset + 4)
+        if sfat_header_size != 0xc:
+            raise ValueError("Unexpected SFAT header size")
+        node_count = self._read_u16(sfat_header_offset + 6)
+        node_offset = sarc_header_size + sfat_header_size
+        if (node_count >> 0xe) != 0:
+            raise ValueError("Too many entries")
 
-        magic2 = self._data[pos:pos + 4];pos += 6
-        assert magic2 == b"SFAT"
-        nodec = self._read_u16(pos);pos += 6 #Node Count
-        nodes: list = []
-        for x in range(nodec):
-            pos += 8
-            srt  = self._read_u32(pos);pos += 4 #File Offset Start
-            end  = self._read_u32(pos);pos += 4 #File Offset End
-            nodes.append([srt, end])
+        # Parse the SFNT header.
+        sfnt_header_offset = node_offset + _SFAT_NODE_SIZE * node_count
+        if self._data[sfnt_header_offset:sfnt_header_offset+4] != b"SFNT":
+            raise ValueError("Unknown SNFT magic")
+        sfnt_header_size = self._read_u16(sfnt_header_offset + 4)
+        if sfnt_header_size != 8:
+            raise ValueError("Unexpected SFNT header size")
+        name_table_offset = sfnt_header_offset + sfnt_header_size
 
-        magic3 = self._data[pos:pos + 4];pos += 8
-        assert magic3 == b"SFNT"
-        self._files: dict = dict()
-        for node in nodes:
-            pos = (pos + 3) & -4
-            string = self._read_string(pos)
-            pos += len(string) + 1
-            self._files[string] = node
+        # Check the data offset.
+        self._data_offset = self._read_u32(0xc)
+        if self._data_offset < name_table_offset:
+            raise ValueError("File data should not be stored before the name table")
+
+        self._files = self._parse_file_nodes(node_offset, node_count, name_table_offset)
+
+    _Files = typing.Dict[str, typing.Tuple[int, int]]
+    def _parse_file_nodes(self, node_offset: int, node_count: int, name_table_offset: int) -> _Files:
+        nodes: SARC._Files = dict()
+
+        offset = node_offset
+        for i in range(node_count):
+            name_hash = self._read_u32(offset)
+            flags_and_name_offset = self._read_u32(offset + 4)
+            flags = flags_and_name_offset >> 24
+            name_offset = flags_and_name_offset & 0xffffff
+            file_data_begin = self._read_u32(offset + 8)
+            file_data_end = self._read_u32(offset + 0xc)
+
+            if flags_and_name_offset == 0:
+                raise ValueError(f"Unnamed files are not supported")
+            abs_name_offset = name_table_offset + 4 * name_offset
+            if abs_name_offset > self._data_offset:
+                raise ValueError(f"Invalid name offset for 0x{name_hash:08x}")
+
+            name = self._read_string(abs_name_offset)
+            nodes[name] = (file_data_begin, file_data_end)
+            offset += _SFAT_NODE_SIZE
+
+        return nodes
 
     def guess_default_alignment(self) -> int:
         if len(self._files) <= 2:
             return 4
-        gcd = next(iter(self._files.values()))[0] + self._doff
+        gcd = next(iter(self._files.values()))[0] + self._data_offset
         for node in self._files.values():
-            gcd = math.gcd(gcd, node[0] + self._doff)
+            gcd = math.gcd(gcd, node[0] + self._data_offset)
 
         if gcd == 0 or gcd & (gcd - 1) != 0:
             # If the GCD is not a power of 2, the files are mostly likely NOT aligned.
@@ -68,7 +108,7 @@ class SARC:
         return gcd
 
     def get_data_offset(self) -> int:
-        return self._doff
+        return self._data_offset
 
     def get_file_offsets(self) -> typing.List[typing.Tuple[str, int]]:
         offsets: list = []
@@ -85,19 +125,19 @@ class SARC:
         if size < 4:
             return False
 
-        magic = self._data[self._doff + node[0]:self._doff + node[0] + 4]
+        magic = self._data[self._data_offset + node[0]:self._data_offset + node[0] + 4]
         if magic == b"SARC":
             return True
         if magic == b"Yaz0":
             if size < 0x15:
                 return False
-            fourcc = self._data[self._doff + node[0] + 0x11:self._doff + node[0] + 0x15]
+            fourcc = self._data[self._data_offset + node[0] + 0x11:self._data_offset + node[0] + 0x15]
             return fourcc == b"SARC"
         return False
 
     def get_file_data(self, name: str) -> memoryview:
         node = self._files[name]
-        return memoryview(self._data[self._doff + node[0]:self._doff + node[1]])
+        return memoryview(self._data[self._data_offset + node[0]:self._data_offset + node[1]])
 
     def get_file_size(self, name: str) -> int:
         node = self._files[name]
@@ -114,7 +154,7 @@ class SARC:
             filename = name + "/" + file_name
             if not os.path.exists(os.path.dirname(filename)):
                 os.makedirs(os.path.dirname(filename))
-            filedata = self._data[self._doff + node[0]:self._doff + node[1]]
+            filedata = self._data[self._data_offset + node[0]:self._data_offset + node[1]]
             print(filename)
             with open(filename, 'wb') as f:
                 f.write(filedata) # type: ignore
@@ -125,7 +165,7 @@ class SARC:
         return struct.unpack_from(_get_unpack_endian_character(self._be) + 'I', self._data, offset)[0]
     def _read_string(self, offset: int) -> str:
         end = self._data.obj.find(_NUL_CHAR, offset) # type: ignore
-        return self._data[offset:end].tobytes().decode('utf-8')
+        return self._data[offset:end].tobytes().decode()
 
 class _PlaceholderOffsetWriter:
     """Writes a placeholder offset value that will be filled later."""
