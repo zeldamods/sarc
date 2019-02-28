@@ -13,12 +13,16 @@ from . import sarc
 import wszst_yaz0
 
 def sarc_extract(args) -> None:
+    target_dir: typing.Optional[str] = args.directory
     with open(args.sarc, "rb") as f:
         s = sarc.read_file_and_make_sarc(f)
         if not s:
             sys.stderr.write("Unknown file format\n")
             sys.exit(1)
-        s.extract(args.sarc)
+        if target_dir:
+            s.extract_to_dir(args.sarc, target_dir, print_names=True)
+        else:
+            s.extract(args.sarc, print_names=True)
 
 def sarc_list(args) -> None:
     with open(args.sarc, "rb") as f:
@@ -180,6 +184,7 @@ def main() -> None:
 
     x_parser = subparsers.add_parser('extract', description='Extract an archive', aliases=['x'])
     x_parser.add_argument('sarc', help='Path to an SARC archive')
+    x_parser.add_argument('--directory', '-C', help='Target directory')
     x_parser.set_defaults(func=sarc_extract)
 
     l_parser = subparsers.add_parser('list', description='List files in an archive', aliases=['l'])

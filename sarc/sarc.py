@@ -147,16 +147,20 @@ class SARC:
     def get_file_data_offset(self, name: str) -> int:
         return self._files[name][0]
 
-    def extract(self, archive_name: str) -> None:
+    def extract(self, archive_name: str, print_names=False) -> None:
         name, ext = os.path.splitext(archive_name)
         try: os.mkdir(name)
         except: pass
+        self.extract_to_dir(archive_name, name, print_names)
+
+    def extract_to_dir(self, archive_name: str, dest_dir: str, print_names=False) -> None:
         for file_name, node in self._files.items():
-            filename = name + "/" + file_name
+            filename = dest_dir + "/" + file_name
             if not os.path.exists(os.path.dirname(filename)):
                 os.makedirs(os.path.dirname(filename))
             filedata = self._data[self._data_offset + node[0]:self._data_offset + node[1]]
-            print(filename)
+            if print_names:
+                print(filename)
             with open(filename, 'wb') as f:
                 f.write(filedata) # type: ignore
 
