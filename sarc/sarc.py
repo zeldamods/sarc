@@ -345,6 +345,11 @@ class SARCWriter:
             offsets.append((self._files[h].name, data_offset))
             data_offset += len(self._files[h].data)
         return offsets
+    
+    def get_bytes(self):
+        stream = io.BytesIO()
+        self.write(stream)
+        return stream.getvalue()
 
     def write(self, stream: typing.BinaryIO) -> int:
         self._refresh_alignment_info()
