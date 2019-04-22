@@ -151,9 +151,9 @@ class SARC:
         name, ext = os.path.splitext(archive_name)
         try: os.mkdir(name)
         except: pass
-        self.extract_to_dir(archive_name, name, print_names)
+        self.extract_to_dir(name, print_names)
 
-    def extract_to_dir(self, archive_name: str, dest_dir: str, print_names=False) -> None:
+    def extract_to_dir(self, dest_dir: str, print_names=False) -> None:
         for file_name, node in self._files.items():
             filename = dest_dir + "/" + file_name
             if not os.path.exists(os.path.dirname(filename)):
