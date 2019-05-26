@@ -20,7 +20,7 @@ def sarc_extract(args) -> None:
             sys.stderr.write("Unknown file format\n")
             sys.exit(1)
         if target_dir:
-            s.extract_to_dir(args.sarc, target_dir, print_names=True)
+            s.extract_to_dir(target_dir, print_names=True)
         else:
             s.extract(args.sarc, print_names=True)
 
