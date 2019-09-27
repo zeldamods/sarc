@@ -345,7 +345,7 @@ class SARCWriter:
             offsets.append((self._files[h].name, data_offset))
             data_offset += len(self._files[h].data)
         return offsets
-    
+
     def get_bytes(self):
         stream = io.BytesIO()
         self.write(stream)
@@ -388,7 +388,7 @@ class SARCWriter:
             stream.write(self._u32(data_offset))
             data_offset += len(self._files[h].data)
             stream.write(self._u32(data_offset))
-            string_offset += _align_up(len(self._files[h].name) + 1, 4)
+            string_offset += _align_up(len(self._files[h].name.encode()) + 1, 4)
 
         # File name table
         stream.write(b'SFNT')
