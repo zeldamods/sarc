@@ -12,7 +12,7 @@ import sys
 import typing
 
 import rstb
-import wszst_yaz0
+import syaz0
 
 def _get_unpack_endian_character(big_endian: bool):
     return '>' if big_endian else '<'
@@ -265,7 +265,7 @@ class SARCWriter:
         if len(data) <= 0x4:
             return 0
         if data[0:4] == b'Yaz0' and data[0x11:0x15] == b'SARC':
-            data = memoryview(wszst_yaz0.decompress(data))
+            data = memoryview(syaz0.decompress(data))
         if data[0:4] != b'SARC':
             return 0
         # In some archives (SMO for example), Nintendo seems to use a somewhat arbitrary
@@ -430,7 +430,7 @@ def read_file_and_make_sarc(f: typing.BinaryIO) -> typing.Optional[SARC]:
         f.seek(0)
         if first_data_group_fourcc != b"SARC":
             return None
-        data = wszst_yaz0.decompress(f.read())
+        data = syaz0.decompress(f.read())
     elif magic == b"SARC":
         f.seek(0)
         data = f.read()

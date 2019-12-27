@@ -10,7 +10,7 @@ import sys
 import typing
 
 from . import sarc
-import wszst_yaz0
+import syaz0
 
 def sarc_extract(args) -> None:
     target_dir: typing.Optional[str] = args.directory
@@ -42,15 +42,11 @@ def _write_sarc(writer: sarc.SARCWriter, dest_file: str, dest_stream: typing.Bin
 
     extension = os.path.splitext(dest_file)[1]
     if extension.startswith('.s') and extension != '.sarc':
-        dest_stream.write(wszst_yaz0.compress(buf.getbuffer()))
-        if alignment > 0x20:
-            # Offset 0x8 in the yaz0 header is the data alignment.
-            # sead::ParallelSZSDecompressor::tryDecompFromDevice allocates the read buffer
-            # with arg->alignment or max(yaz0_header->alignment, 0x20) if no specific alignment
-            # was requested by the calling code.
-            # So we need to make sure that the alignment value is kept.
-            dest_stream.seek(8)
-            dest_stream.write(struct.pack('>I', alignment))
+        # sead::ParallelSZSDecompressor::tryDecompFromDevice allocates the read buffer
+        # with arg->alignment or max(yaz0_header->alignment, 0x20) if no specific alignment
+        # was requested by the calling code.
+        # So we need to make sure that the alignment value is kept.
+        dest_stream.write(syaz0.compress(buf.getbuffer(), data_alignment=(alignment if alignment > 0x20 else 0)))
     else:
         shutil.copyfileobj(buf, dest_stream)
 
