@@ -24,7 +24,7 @@ setuptools.setup(
         "Topic :: Software Development :: Libraries",
     ],
     python_requires='>=3.6',
-    install_requires=['rstb~=1.0', 'syaz0~=1.0'],
+    install_requires=['rstb~=1.0', 'oead~=1.0'],
     entry_points = {
         'console_scripts': [
             'sarc = sarc.__main__:main',

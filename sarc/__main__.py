@@ -10,7 +10,7 @@ import sys
 import typing
 
 from . import sarc
-import syaz0
+import oead
 
 def sarc_extract(args) -> None:
     target_dir: typing.Optional[str] = args.directory
@@ -46,7 +46,7 @@ def _write_sarc(writer: sarc.SARCWriter, dest_file: str, dest_stream: typing.Bin
         # with arg->alignment or max(yaz0_header->alignment, 0x20) if no specific alignment
         # was requested by the calling code.
         # So we need to make sure that the alignment value is kept.
-        dest_stream.write(syaz0.compress(buf.getbuffer(), data_alignment=(alignment if alignment > 0x20 else 0)))
+        dest_stream.write(oead.yaz0.compress(buf.getbuffer(), data_alignment=(alignment if alignment > 0x20 else 0)))
     else:
         shutil.copyfileobj(buf, dest_stream)
 
